@@ -1,20 +1,32 @@
-import axios from "axios";
+import Search from './models/Search';
+import * as searchView from './views/searchView';
+import { elements, renderLoader, clearLoader } from './views/base';
 
-async function getResults(query) {
-  const proxy = "https://cors-anywhere.herokuapp.com/";
-  const key = "8cdf1793f844fc29f814093719d93807";
-  try {
-    const res = await axios(
-      `${proxy}http://food2fork.com/api/search?key=${key}&q=${query}`
-    );
-    const recipes = res.data.recipes;
-    console.log(recipes);
-  } catch (error) {
-    alert(error);
+// Global state of the app
+const state = {};
+
+const controlSearch = async () => {
+  // 1. Get query from the view
+  const query = searchView.getInput(); // TODO
+  console.log(query);
+
+  if (query) {
+    // 2. New search Object and add to state
+    state.search = new Search(query);
+    // 3. Prepare UI for results
+    searchView.clearInput();
+    searchView.clearResults();
+    renderLoader(elements.searchRes);
+    // 4. Search for recipes
+    await state.search.getResults();
+
+    // 5. render results on UI
+    clearLoader();
+    searchView.renderResults(state.search.result);
   }
-}
-getResults("oyster");
+};
 
-// 8cdf1793f844fc29f814093719d93807
-
-// http://food2fork.com/api/search
+elements.searchForm.addEventListener('submit', e => {
+  e.preventDefault();
+  controlSearch();
+});
